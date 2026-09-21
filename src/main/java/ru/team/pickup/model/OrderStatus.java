@@ -1,4 +1,4 @@
-package model;
+package ru.team.pickup.model;
 
 public enum OrderStatus {
 

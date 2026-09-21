@@ -1,6 +1,5 @@
-package model;
+package ru.team.pickup.model;
 
-import javax.print.attribute.standard.JobKOctets;
 import java.util.Objects;
 
 public enum CellSize {

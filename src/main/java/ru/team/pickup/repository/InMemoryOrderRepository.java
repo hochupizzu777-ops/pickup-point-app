@@ -24,5 +24,5 @@ import ru.team.pickup.model.Order;
  * Здесь нет проверки кода получения, сроков и доступности склада.
  */
 public class InMemoryOrderRepository implements Repository<Order, String> {
-    // TODO: добавить реализацию в задаче ответственного участника.
+
 }

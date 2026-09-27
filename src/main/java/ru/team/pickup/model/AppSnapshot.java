@@ -3,6 +3,8 @@ package ru.team.pickup.model;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 import ru.team.pickup.exception.DataFormatException;
 
 /**
@@ -17,33 +19,19 @@ import ru.team.pickup.exception.DataFormatException;
  */
 public class AppSnapshot {
 
-    // Неизменяемый список заказов. List.copyOf в конструкторе гарантирует,
-    // что никто не сможет изменить список после создания снимка.
     private final List<Order> orders;
-
-    // Неизменяемый список ячеек.
     private final List<StorageCell> cells;
 
-    /**
-     * Конструктор снимка.
-     *
-     * @param orders список заказов (будет скопирован через List.copyOf)
-     * @param cells  список ячеек (будет скопирован через List.copyOf)
-     */
     public AppSnapshot(List<Order> orders, List<StorageCell> cells) {
         // List.copyOf создаёт неизменяемую копию списка.
-        // Если передать null — бросит NullPointerException, что нормально:
-        // снимок без списков не имеет смысла.
         this.orders = List.copyOf(orders);
         this.cells = List.copyOf(cells);
     }
 
-    // Геттер для списка заказов. Возвращает неизменяемый список.
     public List<Order> getOrders() {
         return orders;
     }
 
-    // Геттер для списка ячеек. Возвращает неизменяемый список.
     public List<StorageCell> getCells() {
         return cells;
     }
@@ -64,122 +52,92 @@ public class AppSnapshot {
      */
     public void validate() throws DataFormatException {
         // --- Проверка 1: дубликаты id заказов ---
-        // Set хранит уникальные значения. Если размер Set меньше размера списка — есть дубликаты.
         Set<String> orderIds = new HashSet<>();
+        Map<String, Order> orderMap = new HashMap<>();
+
         for (Order order : orders) {
-            // Если add вернул false — такой id уже есть в Set, значит дубликат.
-            if (!orderIds.add(order.getId())) {
-                throw new DataFormatException(
-                        "Дубликат id заказа: " + order.getId()
-                );
+            // Используем реальный метод из твоего Order.java: getId()
+            String id = order.getId();
+
+            if (!orderIds.add(id)) {
+                throw new DataFormatException("Дубликат id заказа: " + id);
             }
+            orderMap.put(id, order);
         }
 
         // --- Проверка 2: дубликаты id ячеек ---
-        // Аналогично: Set для уникальных id ячеек.
         Set<String> cellIds = new HashSet<>();
-        // Одновременно строим Map: cellId → StorageCell для быстрого поиска ячейки по id.
-        // HashMap даёт O(1) доступ — быстрее, чем линейный поиск по списку.
-        java.util.Map<String, StorageCell> cellMap = new java.util.HashMap<>();
+        Map<String, StorageCell> cellMap = new HashMap<>();
+
         for (StorageCell cell : cells) {
             if (!cellIds.add(cell.getId())) {
-                throw new DataFormatException(
-                        "Дубликат id ячейки: " + cell.getId()
-                );
+                throw new DataFormatException("Дубликат id ячейки: " + cell.getId());
             }
-            // Кладём ячейку в Map: cellId → StorageCell.
             cellMap.put(cell.getId(), cell);
         }
 
         // --- Проверки 3–5 и 7: для каждого заказа ---
         for (Order order : orders) {
-            // cellId заказа — может быть null для ISSUED/RETURNED без исторической ячейки,
-            // но план говорит, что заказ хранит исторический cellId и после освобождения.
+            // Используем реальный метод из твоего Order.java: getCellId()
             String cellId = order.getCellId();
+            // Используем реальный метод из твоего Order.java: getStatus()
+            OrderStatus status = order.getStatus();
 
-            // isActive — true для заказов, которые занимают ячейку.
-            // READY_FOR_PICKUP и EXPIRED занимают ячейку (правило 9 из плана).
-            boolean isActive = order.getStatus() == OrderStatus.READY_FOR_PICKUP
-                    || order.getStatus() == OrderStatus.EXPIRED;
+            boolean isActive = status == OrderStatus.READY_FOR_PICKUP
+                    || status == OrderStatus.EXPIRED;
 
             if (isActive) {
-                // Проверка 3: активный заказ должен иметь cellId.
-                if (cellId == null) {
-                    throw new DataFormatException(
-                            "Активный заказ " + order.getId() + " не имеет cellId"
-                    );
+                if (cellId == null || cellId.isBlank()) {
+                    throw new DataFormatException("Активный заказ " + order.getId() + " не имеет cellId");
                 }
 
-                // Проверка 4: ячейка с таким cellId должна существовать.
                 StorageCell cell = cellMap.get(cellId);
                 if (cell == null) {
-                    throw new DataFormatException(
-                            "Заказ " + order.getId() + " ссылается на несуществующую ячейку " + cellId
-                    );
+                    throw new DataFormatException("Заказ " + order.getId() + " ссылается на несуществующую ячейку " + cellId);
                 }
 
-                // Проверка 4 (продолжение): ячейка должна быть занята именно этим заказом.
-                if (cell.isFree() || !cell.getOrderId().equals(order.getId())) {
-                    throw new DataFormatException(
-                            "Ячейка " + cellId + " не занята заказом " + order.getId()
-                    );
+                // Исправление бага с Optional: сравниваем строки корректно
+                String cellOrderId = cell.getOrderId().orElse(null);
+                String currentOrderId = order.getId();
+
+                if (cell.isFree() || !currentOrderId.equals(cellOrderId)) {
+                    throw new DataFormatException("Ячейка " + cellId + " не занята заказом " + currentOrderId);
                 }
 
-                // Проверка 5: размер ячейки должен вмещать требуемый размер заказа.
-                if (!cell.getSize().fits(order.getRequiredSize())) {
-                    throw new DataFormatException(
-                            "Ячейка " + cellId + " (" + cell.getSize() + ") слишком мала для заказа "
-                                    + order.getId() + " (требуется " + order.getRequiredSize() + ")"
-                    );
+                // Используем реальный метод из твоего Order.java: getRequiredSize()
+                CellSize requiredSize = order.getRequiredSize();
+                if (!cell.getSize().fits(requiredSize)) {
+                    throw new DataFormatException("Ячейка " + cellId + " (" + cell.getSize() + ") слишком мала для заказа " + currentOrderId + " (требуется " + requiredSize + ")");
                 }
             } else {
-                // Проверка 7: для ISSUED/RETURNED — исторический cellId должен существовать.
-                // По правилу 9 заказ хранит исторический cellId и после освобождения.
-                if (cellId != null && !cellMap.containsKey(cellId)) {
-                    throw new DataFormatException(
-                            "Заказ " + order.getId() + " имеет исторический cellId " + cellId
-                                    + ", но такая ячейка не существует"
-                    );
+                // Для неактивных заказов (ISSUED, RETURNED) проверяем, что исторический cellId существует
+                if (cellId != null && !cellId.isBlank() && !cellMap.containsKey(cellId)) {
+                    throw new DataFormatException("Заказ " + order.getId() + " имеет исторический cellId " + cellId + ", но такая ячейка не существует");
                 }
             }
         }
 
         // --- Проверка 6: каждая занятая ячейка указывает на активный заказ ---
-        // Строим Map: orderId → Order для быстрого поиска заказа по id.
-        java.util.Map<String, Order> orderMap = new java.util.HashMap<>();
-        for (Order order : orders) {
-            orderMap.put(order.getId(), order);
-        }
-
         for (StorageCell cell : cells) {
-            // Если ячейка занята (orderId != null) — проверяем, что заказ существует и активен.
             if (!cell.isFree()) {
                 String orderId = cell.getOrderId().orElse(null);
                 Order order = orderMap.get(orderId);
 
-                // Заказ, занимающий ячейку, должен существовать.
                 if (order == null) {
-                    throw new DataFormatException(
-                            "Ячейка " + cell.getId() + " занята несуществующим заказом " + orderId
-                    );
+                    throw new DataFormatException("Ячейка " + cell.getId() + " занята несуществующим заказом " + orderId);
                 }
 
-                // Заказ должен быть активным (READY_FOR_PICKUP или EXPIRED).
-                boolean orderActive = order.getStatus() == OrderStatus.READY_FOR_PICKUP
-                        || order.getStatus() == OrderStatus.EXPIRED;
+                OrderStatus orderStatus = order.getStatus();
+                boolean orderActive = orderStatus == OrderStatus.READY_FOR_PICKUP
+                        || orderStatus == OrderStatus.EXPIRED;
+
                 if (!orderActive) {
-                    throw new DataFormatException(
-                            "Ячейка " + cell.getId() + " занята неактивным заказом " + orderId
-                                    + " (статус: " + order.getStatus() + ")"
-                    );
+                    throw new DataFormatException("Ячейка " + cell.getId() + " занята неактивным заказом " + orderId + " (статус: " + orderStatus + ")");
                 }
 
-                // cellId в заказе должен совпадать с id этой ячейки.
-                if (!cell.getId().equals(order.getCellId())) {
-                    throw new DataFormatException(
-                            "Ячейка " + cell.getId() + " указывает на заказ " + orderId
-                                    + ", но заказ указывает на ячейку " + order.getCellId()
-                    );
+                String orderCellId = order.getCellId();
+                if (!cell.getId().equals(orderCellId)) {
+                    throw new DataFormatException("Ячейка " + cell.getId() + " указывает на заказ " + orderId + ", но заказ указывает на ячейку " + orderCellId);
                 }
             }
         }

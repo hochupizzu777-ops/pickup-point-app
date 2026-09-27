@@ -24,5 +24,8 @@ public class PickupPointException extends RuntimeException {
     public PickupPointException(String message, Throwable cause) {
         super(message, cause);
     }
+    public PickupPointException(Throwable cause) {
+        super(cause);
+    }
 }
 

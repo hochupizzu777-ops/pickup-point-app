@@ -8,16 +8,29 @@ import java.io.IOException;
  * Наследуется от IOException.
  *
  * Используется для:
- *
- * некорректных строк;
- * неизвестной версии формата;
- * неверных счётчиков;
- * повреждённых связей между заказами и ячейками.
+ * - некорректных строк;
+ * - неизвестной версии формата;
+ * - неверных счётчиков;
+ * - повреждённых связей между заказами и ячейками.
  *
  * Конструкторы принимают сообщение и, при необходимости, причину.
  *
  * Это наш класс ru.team.pickup.exception.DataFormatException, не одноимённый класс из java.util.zip.
  */
 public class DataFormatException extends IOException {
-    // TODO: добавить реализацию в задаче ответственного участника.
+
+    // Конструктор без причины — передаёт сообщение об ошибке
+    public DataFormatException(String message) {
+        super(message);
+    }
+
+    // Конструктор с причиной — передаёт сообщение и вложенное исключение
+    public DataFormatException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    // Конструктор только с причиной — используется, если сообщение не требуется
+    public DataFormatException(Throwable cause) {
+        super(cause);
+    }
 }

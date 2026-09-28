@@ -184,5 +184,4 @@ public final class Order {
                 ", expiresOn=" + expiresOn +
                 ", cellId='" + cellId + '\'' +
                 '}';
-    }
-}
+   

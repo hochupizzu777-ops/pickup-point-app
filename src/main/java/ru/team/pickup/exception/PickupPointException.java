@@ -16,5 +16,16 @@ package ru.team.pickup.exception;
  * Общий предок позволяет меню обрабатывать ожидаемые ошибки приложения одним catch.
  */
 public class PickupPointException extends RuntimeException {
-    // TODO: добавить реализацию в задаче ответственного участника.
+    // конструктор - 1 только сообщения об ошибке
+    public PickupPointException(String message) {
+        super(message);
+    }
+    //конструктор -2 сообщения + причина
+    public PickupPointException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    public PickupPointException(Throwable cause) {
+        super(cause);
+    }
 }
+

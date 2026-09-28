@@ -1,5 +1,8 @@
 package ru.team.pickup.repository;
 
+import java.util.List;
+import java.util.Optional;
+
 /**
  * Repository<T, ID> — общий интерфейс хранилища, У1
  *
@@ -22,5 +25,7 @@ package ru.team.pickup.repository;
  * Сам интерфейс не хранит данные.
  */
 public interface Repository<T, ID> {
-    // TODO: добавить реализацию в задаче ответственного участника.
+    Optional<T> findById(ID id);
+    List<T> findAll();
+    void save(T entity);
 }

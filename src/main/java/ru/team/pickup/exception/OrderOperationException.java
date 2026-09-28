@@ -15,5 +15,12 @@ package ru.team.pickup.exception;
  * Те же два конструктора: сообщение и сообщение с причиной.
  */
 public class OrderOperationException extends PickupPointException {
-    // TODO: добавить реализацию в задаче ответственного участника.
+
+    public OrderOperationException(String message){
+        super(message);
+    }
+
+    public OrderOperationException(String message, Throwable cause){
+        super(message, cause);
+    }
 }

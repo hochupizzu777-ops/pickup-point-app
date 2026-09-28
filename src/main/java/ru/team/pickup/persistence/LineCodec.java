@@ -1,5 +1,7 @@
 package ru.team.pickup.persistence;
 
+import ru.team.pickup.exception.DataFormatException;
+
 /**
  * LineCodec<T> — преобразование строки, У1
  *
@@ -16,5 +18,7 @@ package ru.team.pickup.persistence;
  * Файл здесь не открывается.
  */
 public interface LineCodec<T> {
-    // TODO: добавить реализацию в задаче ответственного участника.
+
+    String encode(T value);
+    T decode(String line) throws DataFormatException;
 }

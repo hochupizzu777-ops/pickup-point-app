@@ -1,6 +1,7 @@
 package ru.team.pickup.repository;
 
 import ru.team.pickup.model.Order;
+import java.util.*;
 
 /**
  * InMemoryOrderRepository — хранилище заказов, У1
@@ -25,4 +26,32 @@ import ru.team.pickup.model.Order;
  */
 public class InMemoryOrderRepository implements Repository<Order, String> {
 
+    private final Map<String, Order> orders = new HashMap<>();
+
+    @Override
+    public Optional<Order> findById(String id){
+        if (id == null || id.isBlank()){
+            throw new IllegalArgumentException(
+                    "Значение Id не может быть null или отсутствовать"
+            );
+        }
+
+        return Optional.ofNullable(orders.get(id.strip()));
+    }
+
+    @Override
+    public List<Order> findAll(){
+        return List.copyOf(orders.values());
+    }
+
+    @Override
+    public void save(Order order){
+        if (order == null){
+            throw new IllegalArgumentException(
+                    "Нельзя добавить пустой заказ"
+            );
+        }
+
+        orders.put(order.getId(), order);
+    }
 }

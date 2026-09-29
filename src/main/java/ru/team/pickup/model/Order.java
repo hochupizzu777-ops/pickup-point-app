@@ -50,8 +50,8 @@ public final class Order {
     private final OrderStatus status;
     private final String cellId;
 
-    private static String requireText(String value, String fieldName){
-        if (value == null || value.isBlank()){
+    private static String requireText(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(
                     fieldName + " не может быть пустым"
             );
@@ -70,39 +70,39 @@ public final class Order {
             LocalDate expiresOn,
             OrderStatus status,
             String cellId
-    ){
+    ) {
         this.id = requireText(id, "Номер заказа");
         this.pickupCode = requireText(pickupCode, "Код получения");
         this.cellId = requireText(cellId, "Номер ячейки");
 
-        if (recipient == null){
+        if (recipient == null) {
             throw new IllegalArgumentException(
                     "Получатель не может быть null"
             );
         }
-        if (items == null || items.isEmpty()){
+        if (items == null || items.isEmpty()) {
             throw new IllegalArgumentException(
                     "Список товаров не может юыть пустым"
             );
         }
-        for (OrderItem item : items){
-            if (item == null){
+        for (OrderItem item : items) {
+            if (item == null) {
                 throw new IllegalArgumentException(
                         "Товар не может быть null"
                 );
             }
         }
-        if (requiredSize == null){
+        if (requiredSize == null) {
             throw new IllegalArgumentException(
                     "Размер заказа не может быть null"
             );
         }
-        if (receivedOn == null || expiresOn == null){
+        if (receivedOn == null || expiresOn == null) {
             throw new IllegalArgumentException(
                     "Даты заказа не могут быть null"
             );
         }
-        if (status == null){
+        if (status == null) {
             throw new IllegalArgumentException(
                     "Статус заказа не может быть null"
             );
@@ -116,37 +116,44 @@ public final class Order {
         this.status = status;
     }
 
-    public String getId(){
+    public String getId() {
         return id;
     }
-    public Recipient getRecipient(){
+
+    public Recipient getRecipient() {
         return recipient;
     }
 
     public List<OrderItem> getItems() {
         return items;
     }
-    public CellSize getRequiredSize(){
+
+    public CellSize getRequiredSize() {
         return requiredSize;
     }
-    public String getPickupCode(){
+
+    public String getPickupCode() {
         return pickupCode;
     }
-    public LocalDate getReceivedOn(){
+
+    public LocalDate getReceivedOn() {
         return receivedOn;
     }
-    public LocalDate getExpiresOn(){
+
+    public LocalDate getExpiresOn() {
         return expiresOn;
     }
-    public OrderStatus getStatus(){
+
+    public OrderStatus getStatus() {
         return status;
     }
-    public String getCellId(){
+
+    public String getCellId() {
         return cellId;
     }
 
 
-    public Order withStatus(OrderStatus newStatus){
+    public Order withStatus(OrderStatus newStatus) {
         return new Order(
                 id,
                 recipient,
@@ -161,20 +168,22 @@ public final class Order {
     }
 
     @Override
-    public boolean equals(Object other){
-        if (this == other){
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
-        if (!(other instanceof Order order)){
+        if (!(other instanceof Order order)) {
             return false;
         }
 
         return id.equals(order.id);
     }
+
     @Override
-    public int hashCode(){
+    public int hashCode() {
         return id.hashCode();
     }
+
     @Override
     public String toString() {
         return "Order{" +
@@ -184,4 +193,5 @@ public final class Order {
                 ", expiresOn=" + expiresOn +
                 ", cellId='" + cellId + '\'' +
                 '}';
-   
+    }
+}
